@@ -509,7 +509,7 @@ class Plot(widgets.DOMWidget):
             "minimumFps": self.minimum_fps,
         }
 
-    def get_snapshot(self, compression_level=9, voxel_chunks=[], additional_js_code=""):
+    def get_snapshot(self, compression_level=9, voxel_chunks=[], additional_js_code="",snap_title='K3D viewer'):
         """Produce on the Python side a HTML document with the current plot embedded."""
         import os
         import io
@@ -556,6 +556,51 @@ class Plot(widgets.DOMWidget):
             )
             template = template.replace("[FFLATE_JS]", f.read())
             f.close()
+            
+        if self.snapshot_type == 'custom':
+            f = io.open(
+                os.path.join(dir_path, "static", "snapshot_standalone_custom.txt"),
+                mode="r",
+                encoding="utf-8",
+            )
+            template = f.read()
+            f.close()
+            
+            template = template.replace("[SNAP_TITLE]",snap_title)
+
+            f = io.open(
+                os.path.join(dir_path, "static", "standalone_custom.js"),
+                mode="r",
+                encoding="utf-8",
+            )
+            template = template.replace(
+                "[K3D_SOURCE]",
+                base64.b64encode(
+                    zlib.compress(f.read().encode(), compression_level)
+                ).decode("utf-8"),
+            )
+            f.close()
+
+            f = io.open(
+                os.path.join(dir_path, "static", "require.js"),
+                mode="r",
+                encoding="utf-8",
+            )
+            template = template.replace("[REQUIRE_JS]", f.read())
+            f.close()
+
+            f = io.open(
+                os.path.join(dir_path, "static", "fflate.js"),
+                mode="r",
+                encoding="utf-8",
+            )
+            template = template.replace("[FFLATE_JS]", f.read())
+            f.close()            
+            
+            
+            
+            
+            
         else:
             if self.snapshot_type == 'online':
                 template_file = 'snapshot_online.txt'
